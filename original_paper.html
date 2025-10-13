@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credit Card Fraud Modeling – Miner & Payne</title>
+  <style>
+    body {
+      font-family: "Georgia", serif;
+      line-height: 1.6;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+      color: #222;
+    }
+    h1, h2, h3 {
+      color: #003366;
+    }
+    h1 {
+      text-align: center;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 0.3em;
+    }
+    h3 {
+      margin-top: 1.5em;
+    }
+    figure {
+      margin: 1.5em 0;
+      text-align: center;
+    }
+    figcaption {
+      font-size: 0.9em;
+      color: #555;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5em 0;
+    }
+    table, th, td {
+      border: 1px solid #aaa;
+    }
+    th, td {
+      padding: 0.6em;
+      text-align: center;
+    }
+    a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    footer {
+      margin-top: 2em;
+      border-top: 1px solid #ccc;
+      padding-top: 1em;
+      font-size: 0.9em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Credit Card Fraud Modeling</h1>
+  <h3>Brandon Miner and Konnor Payne</h3>
+
+  <h2>Introduction</h2>
+  <p>
+    The focus of this paper was to create a regression model to accurately predict whether a transaction is fraudulent from parameters including time, location, etc. The models were built on the <em>Credit Card Fraud Detection 2023</em> dataset obtained from Kaggle.com by Nidula Elgiriyewithana, which contains information on European credit cardholders. The dataset consists of 31 parameters in which 28 were anonymized to protect the credit card holders’ information; the 3 parameters that were made public are as follows: <strong>ID</strong> (unique identifier), <strong>Amount</strong> (transaction amount), and <strong>Class</strong> (binary fraud label).
+  </p>
+
+  <p>
+    Since we are both statisticians, we found this dataset of particular interest as it allowed us to build complex models to predict fraudulent transactions. Our first task was to clean the dataset and identify trends that could inform model selection.
+  </p>
+
+  <p>
+    A histogram of Amount was created, followed by a Principal Component Analysis (PCA) to reduce dimensionality and drop insignificant parameters. The processed data was then used to construct a series of regression-based models, optimized for accuracy, sparsity, and false negative rate.
+  </p>
+
+  <h2>Data Analysis</h2>
+  <p>
+    Before analysis, the data was cleaned and standardized. The <strong>ID</strong> parameter was removed as it held no predictive value. Histograms of fraudulent and non-fraudulent transactions (Figure 1) were analyzed to identify any patterns, but <strong>Amount</strong> appeared insignificant for classifying fraud.
+  </p>
+
+  <figure>
+    <figcaption>Figure 1. Histograms of transaction Amount by classification (all, fraudulent, non-fraudulent).</figcaption>
+  </figure>
+
+  <p>
+    A PCA using the Singular Value Decomposition (SVD) method was performed to identify the most informative components. Equations (1) and (2) standardized and decomposed the dataset respectively. Only the top principal components (PC1 and PC2) were retained, explaining 43.19% of total variance.
+  </p>
+
+  <figure>
+    <figcaption>Figure 2. Scree plot of eigenvalues and principal components.</figcaption>
+  </figure>
+
+  <p>
+    The scatter plot of transactions projected onto PC1 and PC2 (Figure 3) revealed distinct groupings between fraudulent and non-fraudulent transactions, particularly along PC1. Parameters most correlated with PC1 were deemed critical for fraud prediction.
+  </p>
+
+  <figure>
+    <figcaption>Figure 3. Scatter plot of PC scores by transaction classification.</figcaption>
+  </figure>
+
+  <p>
+    A PCA Biplot (Figure 4) identified which parameters contributed most strongly to PC1. The parameters V1, V3, V5, V6, V7, V9, V10, V12, V14, V16, V17, and V18 were positively correlated with PC1; V2, V4, V11, and V19 were negatively correlated. These 16 total parameters formed the final model’s feature set.
+  </p>
+
+  <figure>
+    <figcaption>Figure 4. Biplot of variables projected onto PC1 and PC2.</figcaption>
+  </figure>
+
+  <h2>Modeling</h2>
+  <p>
+    To reduce computational load and improve interpretability, model sparsity was prioritized. Sparse models exclude unimpactful parameters to reduce runtime and memory usage while maintaining predictive accuracy.
+  </p>
+
+  <p>
+    All models used an 80/20 train-test split and were based on linear regression. The linear regression formula (Equation 3) was used to predict binary outcomes, with outputs ≥ 0.5 classified as fraudulent.
+  </p>
+
+  <p>
+    Ridge regression (Equation 5) was implemented to improve time complexity via regularization, while LASSO regression (Equation 6) added a sparsity-promoting term controlled by λ. Increasing λ increases sparsity but can reduce accuracy.
+  </p>
+
+  <p>
+    Initial linear and ridge regression models achieved ~94.7% mean accuracy. LASSO regression maintained >90% accuracy with λ = 0.4, achieving an 11.2% false negative rate. Table 1 summarizes model performance.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>λ Value</th>
+        <th>Threshold</th>
+        <th>False Negative Rate</th>
+        <th>Accuracy</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>0 (Linear Regression)</td><td>0.23</td><td>2.1%</td><td>90.8%</td></tr>
+      <tr><td>0.1</td><td>0.31</td><td>2.4%</td><td>90.8%</td></tr>
+      <tr><td>0.2</td><td>0.39</td><td>3.5%</td><td>90.7%</td></tr>
+      <tr><td>0.3</td><td>0.46</td><td>5.4%</td><td>90.6%</td></tr>
+      <tr><td>0.4</td><td>0.50</td><td>11.3%</td><td>93.1%</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Cross-validation (specifically k-fold) was recommended for improved model averaging and robust accuracy estimation across data subsets.
+  </p>
+
+  <h2>Discussion</h2>
+  <p>
+    One of the earliest findings was the insignificance of <strong>Amount</strong> in predicting fraud. Contrary to initial assumptions, the data showed no correlation between transaction value and fraudulence. This might be due to existing fraud detection protocols that already scrutinize high-value transactions.
+  </p>
+
+  <p>
+    While anonymized parameters limit interpretability, the models remain useful for banks. Each can serve as a real-time fraud detection system where the fraud probability threshold can be adjusted to balance false negatives against computational efficiency.
+  </p>
+
+  <h2>Appendix</h2>
+  <p>
+    <strong>Code repositories:</strong><br>
+    <a href="https://github.com/konpayne/MATH-596-Final-Project-Payne-and-Miner/blob/main/MATH_596_Project_Brandon_Miner_Konnor_Payne.ipynb" target="_blank">
+      Main project notebook
+    </a><br>
+    <a href="https://github.com/Branflakes333/credit_card_fraud_code" target="_blank">
+      Clean backend version
+    </a>
+  </p>
+
+  <h2>Bibliography</h2>
+  <ul>
+    <li>Brownlee, Jason. “A Gentle Introduction to K-Fold Cross-Validation.” <em>MachineLearningMastery.com</em>, Oct. 2023.</li>
+    <li>Elgiriyewithana, Nidula. “Credit Card Fraud Detection Dataset 2023.” <em>Kaggle</em>, Sept. 2023.</li>
+    <li>Hui, Jonathan. “Machine Learning — SVD & PCA.” <em>Medium</em>, Jan. 2023.</li>
+    <li>Raschka, Sebastian. “Principal Component Analysis.” <em>sebastianraschka.com</em>, Jan. 2015.</li>
+    <li>“Ridge Regression.” <em>Wikipedia</em>, Nov. 2023.</li>
+    <li>“LASSO (Statistics).” <em>Wikipedia</em>, Dec. 2023.</li>
+    <!-- Add others if needed -->
+  </ul>
+
+  <footer>
+    <p>© 2025 Brandon Miner & Konnor Payne</p>
+  </footer>
+
+</body>
+</html>
