@@ -34,8 +34,8 @@ pca = None
 X_pca = None
 num_components = None
 V_train = None
-V_test = None 
-y_train = None 
+V_test = None
+y_train = None
 y_test = None
 
 
@@ -97,8 +97,8 @@ def prelim_pca():
     # Standardize the features
     scaler = StandardScaler()
     X_scaled = pd.DataFrame(
-      scaler.fit_transform(df[features]),
-      columns=features
+        scaler.fit_transform(df[features]),
+        columns=features
     )
 
     # Perform preliminary PCA
@@ -141,21 +141,20 @@ def fraud_hist(bin_cnt):
     Plots three histograms side-by-side.
 
     :param bin_cnt (int): Number of bins to use in the histograms.
-    
+
     :return: None 
     """
-
 
     fraud = df[df['Class'] == 1]
     notFraud = df[df['Class'] == 0]
 
     fig, axes = plt.subplots(3, 1)
     ax = axes.ravel()
-    ax[0].hist(df['Amount'], bins=bin_cnt, density = True)
+    ax[0].hist(df['Amount'], bins=bin_cnt, density=True)
     ax[0].set_title("All transactions")
-    ax[1].hist(fraud['Amount'], bins=bin_cnt, density = True)
+    ax[1].hist(fraud['Amount'], bins=bin_cnt, density=True)
     ax[1].set_title("Fraud transactions")
-    ax[2].hist(notFraud['Amount'], bins=bin_cnt, density = True)
+    ax[2].hist(notFraud['Amount'], bins=bin_cnt, density=True)
     ax[2].set_title("Non-Fraud transactions")
 
     plt.tight_layout()
@@ -167,9 +166,9 @@ def scree_plt():
     Create and plot a Scree-plot of Principal Components of data set.
 
     :param: None 
-    
+
     :return: None 
-    """ 
+    """
 
     # Visualize scree plot
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), tight_layout=True)
@@ -211,7 +210,7 @@ def pca_biplot():
     Create and plot a Biplot of Principal Component 2's effect of Principal Component 1 (check for error)
 
     :param: None 
-    
+
     :return: None 
     """
 
@@ -255,7 +254,7 @@ def pca_scatter():
     Points colored based on whether the transaction was fraudulent or not.
 
     :param: None 
-    
+
     :return: None 
     """
 
@@ -267,12 +266,12 @@ def pca_scatter():
 
     # Create a scatter plot using Matplotlib
     scatter = ax.scatter(
-        X_pca['PC1'], 
-        X_pca['PC2'], 
-        c=colors, 
-        edgecolor='w', 
-        linewidth=0.5, 
-        s=25, 
+        X_pca['PC1'],
+        X_pca['PC2'],
+        c=colors,
+        edgecolor='w',
+        linewidth=0.5,
+        s=25,
         alpha=0.8
     )
 
@@ -297,27 +296,27 @@ def covariance_plt():
     Points colored based on Severity of variance/covariance
 
     :param: None 
-    
+
     :return: None 
     """
 
     # Calculate covariance matrix
     cov_matrix = df.cov()
-    
+
     # Set up the matplotlib figure with a larger size for more variables
     plt.figure(figsize=(15, 12))
-    
+
     # Use seaborn's heatmap to plot
-    sns.heatmap(cov_matrix, annot=True, fmt=".2f", cmap='coolwarm', square=True, 
+    sns.heatmap(cov_matrix, annot=True, fmt=".2f", cmap='coolwarm', square=True,
                 cbar_kws={"shrink": .7}, xticklabels=cov_matrix.columns, yticklabels=cov_matrix.columns)
-    
+
     # Rotate the x and y labels to prevent overlap
     plt.xticks(rotation=45, ha='right', fontsize=10)
     plt.yticks(rotation=0, fontsize=10)
-    
+
     # Add title
     plt.title('Covariance Matrix')
-    
+
     # Show plot
     plt.tight_layout()  # Adjust layout to make room for labels
     plt.show()
@@ -341,7 +340,8 @@ def fraud_model(V, y):
 
     # Training/testing split
     global V_train, V_test, y_train, y_test
-    V_train, V_test, y_train, y_test = train_test_split(V, y, test_size=0.2, random_state=333)
+    V_train, V_test, y_train, y_test = train_test_split(
+        V, y, test_size=0.2, random_state=333)
 
     logistic.fit(V_train, y_train)
     return logistic
@@ -349,30 +349,30 @@ def fraud_model(V, y):
 
 def calculate_metrics(model, V, y, cutoff):
     '''
-    Calculate accuracy, FPR, and FNR using predictions based on a cutoff.
+    Calculate accuracy, TPR, and FNR using predictions based on a cutoff.
 
     :model: Logistic regression model
     :V: Features data
     :y: Target data
     :cutoff: Cutoff threshold for classifying positive predictions
 
-    :return: Accuracy, FPR, and FNR
+    :return: Accuracy, TPR, and FPR
     '''
     proba = model.predict_proba(V)[:, 1]  # Probability for the positive class
     predictions = (proba >= cutoff)
-    
+
     accuracy = accuracy_score(y, predictions)
-    tn, fp, fn, tp = confusion_matrix(y, predictions).ravel()
+    tn, fp, fn, tp = confusion_matrix(y, predictions).ravel().tolist()
 
+    TPR = tp / (tp + fn) if (tp + fn) > 0 else 0
     FPR = fp / (fp + tn) if (fp + tn) > 0 else 0
-    FNR = fn / (fn + tp) if (fn + tp) > 0 else 0
 
-    return accuracy, FPR, FNR
+    return accuracy, TPR, FPR
 
 
 def model_accuracy(model, cutoff=0.5):
     '''
-    Display model accuracy, FPR, and FNR for train and test data.
+    Display model accuracy, TPR, and FPR for train and test data.
 
     :model: Trained logistic regression model
     :cutoff: Cutoff threshold for positive predictions
@@ -383,7 +383,7 @@ def model_accuracy(model, cutoff=0.5):
     test_metrics = calculate_metrics(model, V_test, y_test, cutoff)
 
     metrics_df = pd.DataFrame({
-        'Metric': ['Accuracy', 'False Positive Rate (FPR)', 'False Negative Rate (FNR)'],
+        'Metric': ['Accuracy', 'True Positive Rate (TPR)', 'False Positive Rate (FPR)'],
         'Training Data': [f'{train_metrics[0] * 100:.2f}%', f'{train_metrics[1] * 100:.2f}%', f'{train_metrics[2] * 100:.2f}%'],
         'Testing Data': [f'{test_metrics[0] * 100:.2f}%', f'{test_metrics[1] * 100:.2f}%', f'{test_metrics[2] * 100:.2f}%']
     })
@@ -391,7 +391,7 @@ def model_accuracy(model, cutoff=0.5):
     return metrics_df
 
 
-def accuracy_FNR_plt(model):
+def roc_auc_plot(model):
     '''
     Plot train and test accuracies, and FNRs across cutoff thresholds.
 
@@ -400,36 +400,33 @@ def accuracy_FNR_plt(model):
     :return: None
     '''
     cutoffs = np.arange(0.001, 0.50, 0.005)
-    train_accuracies, train_FNRs, test_accuracies, test_FNRs = [], [], [], []
+    train_TPRs, train_FNRs, test_TPRs, test_FNRs = [], [], [], []
 
     for cutoff in cutoffs:
         train_metrics = calculate_metrics(model, V_train, y_train, cutoff)
         test_metrics = calculate_metrics(model, V_test, y_test, cutoff)
 
-        train_accuracies.append(train_metrics[0])
+        train_TPRs.append(train_metrics[1])
         train_FNRs.append(train_metrics[2])
-        test_accuracies.append(test_metrics[0])
+        test_TPRs.append(test_metrics[1])
         test_FNRs.append(test_metrics[2])
 
-    fig, axs = plt.subplots(1, 2, figsize=(14, 6))
+    fig, ax = plt.subplots(figsize=(14, 6))
 
-    # Accuracy plot
-    axs[0].plot(cutoffs, train_accuracies, color='blue', label='Train Accuracy')
-    axs[0].plot(cutoffs, test_accuracies, color='green', label='Test Accuracy')
-    axs[0].axhline(y=0.90, color='gray', linestyle='--')
-    axs[0].axvline(x=0.078, color='gray', linestyle='--')
-    axs[0].set_title('Train and Test Accuracy vs Cutoff')
-    axs[0].set_xlabel('Cutoff')
-    axs[0].set_ylabel('Accuracy')
-    axs[0].legend()
-
-    # FNR plot
-    axs[1].plot(cutoffs, train_FNRs, color='red', label='Train FNR')
-    axs[1].plot(cutoffs, test_FNRs, color='purple', label='Test FNR')
-    axs[1].set_title('Train and Test FNR vs Cutoff')
-    axs[1].set_xlabel('Cutoff')
-    axs[1].set_ylabel('FNR')
-    axs[1].legend()
+    # TPR vs FNR plot
+    ax.plot(train_FNRs, train_TPRs, color='red', label='Train FNR')
+    ax.plot(test_FNRs, test_TPRs, color='purple', label='Test FNR')
+    ax.set_title('AUC ROC Curve - TPR vs FNR')
+    ax.set_xlabel('false positive rate (FPR)')
+    ax.set_ylabel('true positive rate (TPR)')
+    ax.legend()
+    ax.text(test_FNRs[0], test_TPRs[0]-0.00225, s=r'$\tau$ = 0.001',
+            fontsize=9, verticalalignment='bottom', horizontalalignment='right')
+    ax.text(test_FNRs[len(test_FNRs)-1]+0.05, test_TPRs[len(test_TPRs)-1]-0.0005, s=r'$\tau$ = 0.500',
+            fontsize=9, verticalalignment='bottom', horizontalalignment='right')
+    ax.plot(test_FNRs[0], test_TPRs[0], color='purple', marker='o')
+    ax.plot(test_FNRs[len(test_FNRs)-1],
+            test_TPRs[len(test_TPRs)-1], color='purple', marker='o')
 
     plt.tight_layout()
     plt.show()
@@ -448,7 +445,8 @@ def calculate_aic(model):
 
     # Step 2: Log-likelihood calculation
     epsilon = 1e-10  # To avoid log(0)
-    log_likelihood = np.sum(y_train * np.log(proba + epsilon) + (1 - y_train) * np.log(1 - proba + epsilon))
+    log_likelihood = np.sum(
+        y_train * np.log(proba + epsilon) + (1 - y_train) * np.log(1 - proba + epsilon))
 
     # Step 3: Number of parameters
     k = V_train.shape[1] + 1  # Number of features + intercept
@@ -461,7 +459,8 @@ def calculate_aic(model):
 
     # Step 2: Log-likelihood calculation
     epsilon = 1e-10  # To avoid log(0)
-    log_likelihood = np.sum(y_test * np.log(proba + epsilon) + (1 - y_test) * np.log(1 - proba + epsilon))
+    log_likelihood = np.sum(
+        y_test * np.log(proba + epsilon) + (1 - y_test) * np.log(1 - proba + epsilon))
 
     # Step 3: Number of parameters
     k = V_test.shape[1] + 1  # Number of features + intercept

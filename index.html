@@ -76,7 +76,7 @@ The Scree Plot and Cumulative Explained Variance plots below demonstrate how muc
             <p>
                 The plots show that the 1st principal component("PC1") accounts for 33%, 
                     of the explained variance. All following principal components account for &lt;11&percnt; of explained variance. 
-                Because "PC1" is so important, 
+                Because "PC1" contains most of the explained variance, 
                     we want to now find which features most greatly correlate to "PC1". 
             </p>
             <img src="images/pca_biplot.png" alt="PCA Biplot" style="display: block; margin-left: auto; margin-right: auto; width: 50%;">
@@ -100,7 +100,8 @@ The Scree Plot and Cumulative Explained Variance plots below demonstrate how muc
             <h2>Modeling - Logistic Regression</h2>
             <p>
                 Since we are dealing with a binary classification problem (fraud or not fraud), 
-                    logistic regrression is by far the best approach.
+                    logistic regrression is by far the best starting approach. 
+                For the purpose of this project, we will stick to a logistic regression model.
             </p>
             <p>We used "Scikit-Learn" as our modeling package. Our hyperparameters selected we as follows:</p>
             <ul>
@@ -113,25 +114,26 @@ The Scree Plot and Cumulative Explained Variance plots below demonstrate how muc
                 In this case, a false negative is when our model classifies "no fraud" when in reality the transacton was fraudulent.
                 Think of the model as being the text message fraud alert system your bank uses.
                 When it detects an unusual transaction, it asks you for further confirmation, or outright blocks the transaction. 
-                To this end, we want to select at what probability of fraud should we classify as fraud.
-                This "cutoff" needs to be where we minimize the false negative rate while preserving as much overall accuracy as possible. 
-                By default, the cutoff is 0.5, and this produces the highest overall accuracy.
-                So how much accuracy loss are we willing to accept to reduce the false negative rate?
+                To this end, we want to select a threshold which dictates our descision on whether we should classify a transaction as fraudulent or not.
+                This threshold(&tau;) needs to be where we minimize the false negative rate while preserving a low false positive rate. 
+                By default, &tau;=0.5. This produces the highest overall accuracy.
+                So how high of a false positive rate are we willing to accept to reduce the false negative rate?
             </p>
             <p>
-                We can illustrate this tradeoff with the following graph:
+                We can illustrate this tradeoff with the following ROC-AUC graph:
             </p>
-            <img src="images/accuracy.png" alt="Cutoff vs Accuracy and False Negative Rate" style="display: block; margin-left: auto; margin-right: auto; width: 50%;">
+            <img src="images/roc-auc.png" alt="ROC-AUC Curve" style="display: block; margin-left: auto; margin-right: auto; width: 50%;">
             <p>
-                We can see that cutoff is approximately linear to false negative rate. 
-                We alse see that if we are okay with lowering the accuracy to roughly 90&percnt;, we can use a cutoff of about 0.078 to maintain accuracy and lower the false negative rate.
+                Since FNR = 1 - TPR, maximizing TPR minimizes FNR. 
+                Therefore, we can see that by only subtly decreasing &tau;, 
+                    we are able to greatly increase TPR, and thus decrease FNR at only a minor increase in FPR. 
+                The specific choice of $\tau$ depends on how large of a FPR we are comfortable. 
+                Let's assume that we want a FPR no greater than 2&percnt;, then this correlates to a threshold of &tau; = 0.484
             </p>
             <p>
-                We have successfully found a cutoff for our model that minimizes out false negative rate, 
-                    while preserving above a 90&percnt; accuracy in both the testing data sets.
-            </p>
-            <p>
-                Note that the train/test split and gradient descent in the logistic model had a fixed random_state for reproducibility.
+                By only slightly decreasing the threshold, we were able to decrease FNR by 0.16&percnt;. 
+                While this is a minor optimization, a larger tolerance for false positive rate would yield a larger decrease, 
+                    though FNR decreases slower than FPR increases as the threshold decreases.
             </p>
         </div>
     </main>

@@ -1,0 +1,13 @@
+name: credit-card-fraud
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - numpy
+  - pandas
+  - matplotlib
+  - scikit-learn
+  - jupyter
+  - seaborn
+  - kagglehub
